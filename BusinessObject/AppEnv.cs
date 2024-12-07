@@ -11,5 +11,10 @@ public static class AppEnv
     {
         get => Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER").ToLower() == "true";
         set => throw new NotImplementedException("IsRunningInContainer is read-only in this implementation.");
+    } 
+
+    public static bool IsUsingSecretManager { 
+        get => Environment.GetEnvironmentVariable("USING_SECRET_MANAGER").ToLower() == "true"; 
+        set => throw new NotImplementedException("IsUsingSecretManager is read-only in this implementation."); 
     }
 }
