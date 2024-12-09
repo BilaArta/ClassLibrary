@@ -5,15 +5,18 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
+using MySql.Data.MySqlClient;
 
 public abstract class BaseRepository<T> : IDisposable where T : class
 {
     private readonly string _connectionString;
+    private readonly DatabaseType _databaseType;
     private IDbConnection _connection;
 
-    protected BaseRepository(string connectionString)
+    protected BaseRepository(string connectionString, DatabaseType databaseType)
     {
         _connectionString = connectionString;
+        _databaseType = databaseType;
     }
 
     protected IDbConnection Connection
@@ -22,7 +25,12 @@ public abstract class BaseRepository<T> : IDisposable where T : class
         {
             if (_connection == null || _connection.State == ConnectionState.Closed)
             {
-                _connection = new SqlConnection(_connectionString);
+                _connection = _databaseType switch
+                {
+                    DatabaseType.SqlServer => new SqlConnection(_connectionString),
+                    DatabaseType.MySql => new MySqlConnection(_connectionString),
+                    _ => throw new NotSupportedException($"Database type {_databaseType} is not supported.")
+                };
             }
             return _connection;
         }
@@ -37,7 +45,6 @@ public abstract class BaseRepository<T> : IDisposable where T : class
         }
         catch (Exception ex)
         {
-            // Log exception (e.g., using a logger)
             throw new Exception($"Error executing InsertAsync: {ex.Message}", ex);
         }
     }
