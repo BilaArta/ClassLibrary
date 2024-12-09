@@ -13,6 +13,7 @@ public class DbContext: IDbContext
     }
     
     public string GetConnectionString(){
-        return _configuration.GetConnectionString(ConnectionName);
+        var IsUsingSecretManager = AppEnv.IsUsingSecretManager;
+        return IsUsingSecretManager ? Environment.GetEnvironmentVariable(ConnectionName):  _configuration.GetConnectionString(ConnectionName);
     }
 }
