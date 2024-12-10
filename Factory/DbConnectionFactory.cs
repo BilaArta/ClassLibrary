@@ -6,7 +6,7 @@ using ClassLibrary.DB;
 
 namespace ClassLibrary.Factory
 {
-    public class DbConnectionFactory:
+    public class DbConnectionFactory
     {
         
     }

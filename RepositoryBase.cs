@@ -5,18 +5,21 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
+using Npgsql;
 using MySql.Data.MySqlClient;
+using ClassLibrary.Enum;
+using ClassLibrary.BusinessObject;
+using Microsoft.Extensions.Configuration;
+using DatabaseDetail = ClassLibrary.BusinessObject.DatabaseConfig.DatabaseDetail;
 
-public abstract class BaseRepository<T> : IDisposable where T : class
+public abstract class BaseRepository<T> : DbContext,  IDisposable where T : class
 {
-    private readonly string _connectionString;
-    private readonly DatabaseType _databaseType;
+    private readonly DatabaseDetail _dbDetailConfig; 
     private IDbConnection _connection;
 
-    protected BaseRepository(string connectionString, DatabaseType databaseType)
+    protected BaseRepository(string DbConfig, IConfiguration configuration): base(DbConfig, configuration)
     {
-        _connectionString = connectionString;
-        _databaseType = databaseType;
+        _dbDetailConfig = GetDatabaseConfig();
     }
 
     protected IDbConnection Connection
@@ -25,11 +28,12 @@ public abstract class BaseRepository<T> : IDisposable where T : class
         {
             if (_connection == null || _connection.State == ConnectionState.Closed)
             {
-                _connection = _databaseType switch
+                _connection = (EnumDatabaseProvider)_dbDetailConfig.DatabaseProvider switch
                 {
-                    DatabaseType.SqlServer => new SqlConnection(_connectionString),
-                    DatabaseType.MySql => new MySqlConnection(_connectionString),
-                    _ => throw new NotSupportedException($"Database type {_databaseType} is not supported.")
+                    EnumDatabaseProvider.SqlServer => new SqlConnection(_dbDetailConfig.ConnectionStrings),
+                    EnumDatabaseProvider.MySql => new MySqlConnection(_dbDetailConfig.ConnectionStrings),
+                    EnumDatabaseProvider.Npgsql => new NpgsqlConnection(_dbDetailConfig.ConnectionStrings),
+                    _ => throw new NotSupportedException($"Database string Config {ConnectionName} is not supported.")
                 };
             }
             return _connection;
