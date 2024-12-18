@@ -8,10 +8,9 @@ namespace ClassLibrary.Interfaces
     public interface ILogger
     {
      
-        void Log(string message);
-        void LogError(string message);
-        void LogWarning(string message);
-        void LogInfo(string message);
+        static abstract void Error(string message);
+        static abstract void Warning(string message);
+        static abstract void Info(string message);
     
     }
 }
