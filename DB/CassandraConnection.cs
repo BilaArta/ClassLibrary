@@ -1,6 +1,6 @@
 using Cassandra;
 using System;
-
+using ClassLibrary.Helper;
 
 namespace ClassLibrary.DB
 {
@@ -18,6 +18,7 @@ namespace ClassLibrary.DB
         {
             if (contactPoints == null || contactPoints.Length == 0)
             {
+                LoggerHelper.Error($"Contact points empty. {nameof(contactPoints)}");
                 throw new ArgumentException("Contact points empty.", nameof(contactPoints));
             }
 
@@ -36,12 +37,11 @@ namespace ClassLibrary.DB
                 {
                     _session.ChangeKeyspace(keyspace);
                 }
-
-                Console.WriteLine("Success Connected to Cassandra.");
+                LoggerHelper.Info("Success Connected to Cassandra.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed Connect to Cassandra: {ex.Message}");
+                LoggerHelper.Error($"Failed Connect to Cassandra: {ex.Message}");
                 Dispose();
                 throw;
             }
@@ -54,6 +54,7 @@ namespace ClassLibrary.DB
         {
             if (_session == null)
             {
+                LoggerHelper.Error("Connection Host Empty.");
                 throw new InvalidOperationException("Connection Host Empty.");
             }
 
