@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
@@ -28,12 +28,12 @@ public abstract class BaseRepository<T> : DbContext,  IDisposable where T : clas
         {
             if (_connection == null || _connection.State == ConnectionState.Closed)
             {
-                _connection = (EnumDatabaseProvider)_dbDetailConfig.DatabaseProvider switch
+                _connection = (EnumDatabaseProvider?)_dbDetailConfig.DatabaseProvider switch
                 {
                     EnumDatabaseProvider.SqlServer => new SqlConnection(_dbDetailConfig.ConnectionStrings),
                     EnumDatabaseProvider.MySql => new MySqlConnection(_dbDetailConfig.ConnectionStrings),
                     EnumDatabaseProvider.Npgsql => new NpgsqlConnection(_dbDetailConfig.ConnectionStrings),
-                    _ => throw new NotSupportedException($"Database string Config {ConnectionName} is not supported.")
+                    _ =>  throw new NotSupportedException($"Database string Config {ConnectionName} is not supported.")
                 };
             }
             return _connection;
@@ -54,7 +54,7 @@ public abstract class BaseRepository<T> : DbContext,  IDisposable where T : clas
     }
 
     // SELECT Data by ID
-    public async Task<T> GetByIdAsync(string query, object parameters = null)
+    public async Task<T?> GetByIdAsync(string query, object parameters = null)
     {
         try
         {
@@ -106,7 +106,7 @@ public abstract class BaseRepository<T> : DbContext,  IDisposable where T : clas
     }
 
     // QueryMultiple
-    public async Task<(T1, IEnumerable<T2>)> QueryMultipleAsync<T1, T2>(string query, object parameters = null)
+    public async Task<(T1?, IEnumerable<T2?>)> QueryMultipleAsync<T1, T2>(string query, object parameters = null)
     {
         try
         {

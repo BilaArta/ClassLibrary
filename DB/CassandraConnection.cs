@@ -69,5 +69,28 @@ namespace ClassLibrary.DB
             _session?.Dispose();
             _cluster?.Dispose();
         }
+
+        public void Test(){
+        var cluster = Cluster.Builder()
+                             .AddContactPoint("127.0.0.1") // Ganti dengan IP/hostname ScyllaDB
+                             .WithPort(9042)
+                             .Build();
+
+            using (var session = cluster.Connect())
+            {
+                session.CreateKeyspaceIfNotExists("example", 
+                    new Dictionary<string, string> { { "class", "SimpleStrategy" }, { "replication_factor", "1" } });
+
+                session.ChangeKeyspace("example");
+                session.Execute("CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY, name text, age int)");
+                session.Execute("INSERT INTO users (id, name, age) VALUES (uuid(), 'Alice', 30)");
+
+                var result = session.Execute("SELECT * FROM users");
+                foreach (var row in result)
+                {
+                    Console.WriteLine($"ID: {row["id"]}, Name: {row["name"]}, Age: {row["age"]}");
+                }
+            }
+        }
     }
 }

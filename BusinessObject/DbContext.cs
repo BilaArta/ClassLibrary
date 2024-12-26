@@ -2,6 +2,8 @@ using ClassLibrary.Interfaces;
 using Microsoft.Extensions.Configuration;
 using ClassLibrary.Enum;
 using DatabaseDetail = ClassLibrary.BusinessObject.DatabaseConfig.DatabaseDetail;
+using ClassLibrary.Helper;
+using Cassandra;
 
 namespace ClassLibrary.BusinessObject;
 public class DbContext: IDbContext
@@ -20,13 +22,15 @@ public class DbContext: IDbContext
         {
             if (string.IsNullOrEmpty(selectedDb.ConnectionStrings))
             {
-                throw new Exception($"Connection string for {ConnectionName} is missing!");
+                LoggerHelper.Error($"Connection string for {ConnectionName} is missing!");
             }
             if (!selectedDb.DatabaseProvider.HasValue)
             {
-                throw new Exception($"Database Provider for {ConnectionName} is missing!");
+                LoggerHelper.Error($"Database Provider for {ConnectionName} is missing!");
             }
+            throw new Exception($"Database Provider/Connection string for {ConnectionName} is missing!");
         }else{
+            LoggerHelper.Error($"Connection string for {ConnectionName} is missing!");
             throw new Exception($"Connection string for {ConnectionName} is missing!");
         }
 
