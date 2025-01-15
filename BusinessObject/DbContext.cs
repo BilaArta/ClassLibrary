@@ -28,8 +28,10 @@ public class DbContext: IDbContext
             {
                 LoggerHelper.Error($"Database Provider for {ConnectionName} is missing!");
             }
-            throw new Exception($"Database Provider/Connection string for {ConnectionName} is missing!");
-        }else{
+            //throw new Exception($"Database Provider/Connection string for {ConnectionName} is missing!");
+            LoggerHelper.Info($"Database Config Provided for {ConnectionName}!");
+        }
+        else{
             LoggerHelper.Error($"Connection string for {ConnectionName} is missing!");
             throw new Exception($"Connection string for {ConnectionName} is missing!");
         }

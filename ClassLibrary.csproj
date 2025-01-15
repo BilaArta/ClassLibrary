@@ -7,6 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Class1.cs" />
+    <Compile Remove="DB\DbConnection.cs" />
+    <Compile Remove="DB\MongoDbConnection.cs" />
+    <Compile Remove="DB\MySqlDbConnection.cs" />
+    <Compile Remove="DB\PostgreSqlConnection.cs" />
+    <Compile Remove="DB\SqlConnection.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CassandraCSharpDriver" Version="3.22.0" />
     <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="log4net" Version="3.0.3" />

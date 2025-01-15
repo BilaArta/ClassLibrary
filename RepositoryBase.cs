@@ -4,20 +4,25 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Transactions;
+using Cassandra;
 using Dapper;
 using Npgsql;
 using MySql.Data.MySqlClient;
 using ClassLibrary.Enum;
 using ClassLibrary.BusinessObject;
+using ClassLibrary.Helper;
 using Microsoft.Extensions.Configuration;
 using DatabaseDetail = ClassLibrary.BusinessObject.DatabaseConfig.DatabaseDetail;
+using MySqlX.XDevAPI.Common;
 
-public abstract class BaseRepository<T> : DbContext,  IDisposable where T : class
+namespace ClassLibrary.RepositoryBase;
+public abstract class BaseRepository<T> : DbContext, IDisposable where T : class
 {
-    private readonly DatabaseDetail _dbDetailConfig; 
+    private readonly DatabaseDetail _dbDetailConfig;
     private IDbConnection _connection;
-
-    protected BaseRepository(string DbConfig, IConfiguration configuration): base(DbConfig, configuration)
+    private readonly string setIsolationLevelRead = "SET TRANSACTION ISOLATION LEVEL READ COMMITTED";
+    protected BaseRepository(string DbContext, IConfiguration configuration) : base(DbContext, configuration)
     {
         _dbDetailConfig = GetDatabaseConfig();
     }
@@ -28,15 +33,81 @@ public abstract class BaseRepository<T> : DbContext,  IDisposable where T : clas
         {
             if (_connection == null || _connection.State == ConnectionState.Closed)
             {
-                _connection = (EnumDatabaseProvider?)_dbDetailConfig.DatabaseProvider switch
+                _connection = (EnumDatabaseProvider)_dbDetailConfig.DatabaseProvider switch
                 {
                     EnumDatabaseProvider.SqlServer => new SqlConnection(_dbDetailConfig.ConnectionStrings),
                     EnumDatabaseProvider.MySql => new MySqlConnection(_dbDetailConfig.ConnectionStrings),
                     EnumDatabaseProvider.Npgsql => new NpgsqlConnection(_dbDetailConfig.ConnectionStrings),
-                    _ =>  throw new NotSupportedException($"Database string Config {ConnectionName} is not supported.")
+                    _ => throw new NotSupportedException($"Database string Config {ConnectionName} is not supported.")
                 };
             }
+            //_connection.Open();
+            if (_connection.State == ConnectionState.Open)
+            {
+                Console.WriteLine("Koneksi berhasil dibuka!");
+            }
+            else
+            {
+                Console.WriteLine($"Status koneksi: {_connection.State}");
+            }
             return _connection;
+        }
+    }
+
+    protected (IDbConnection connection, IDbTransaction transaction) ConnectionTransaction
+    {
+        get
+        {
+            if (_connection == null || _connection.State == ConnectionState.Closed)
+            {
+                _connection = (EnumDatabaseProvider)_dbDetailConfig.DatabaseProvider switch
+                {
+                    EnumDatabaseProvider.SqlServer => new SqlConnection(_dbDetailConfig.ConnectionStrings),
+                    EnumDatabaseProvider.MySql => new MySqlConnection(_dbDetailConfig.ConnectionStrings),
+                    EnumDatabaseProvider.Npgsql => new NpgsqlConnection(_dbDetailConfig.ConnectionStrings),
+                    _ => throw new NotSupportedException($"Database string Config {ConnectionName} is not supported.")
+                };
+            }
+            //_connection.Open();
+            if (_connection.State == ConnectionState.Open)
+            {
+                Console.WriteLine("Koneksi berhasil dibuka!");
+            }
+            else
+            {
+                Console.WriteLine($"Status koneksi: {_connection.State}");
+            }
+            using var transaction = _connection.BeginTransaction();
+            return (_connection, transaction);
+        }
+    }
+
+    // INSERT Data
+    public async Task<int> InsertAsyncTransaction(string query, object parameters)
+    {
+        try
+        {
+            var db = ConnectionTransaction;
+            db.connection.Execute(setIsolationLevelRead, db.transaction);
+
+            try
+            {
+                var result = await db.connection.ExecuteAsync(query, parameters, db.transaction);
+                LoggerHelper.Info($"Data created :{result.ToString()}");
+                db.transaction.Commit();
+                return result;
+            }
+            catch (Exception e)
+            {
+                LoggerHelper.Error($"InsertAsyncTransaction::Exception Error:{e}");
+                throw new Exception($"Error executing InsertAsync: {e.Message}", e);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            LoggerHelper.Error($"InsertAsyncTransaction::Exception Error ex:{ex}");
+            throw new Exception($"Error executing InsertAsync: {ex.Message}", ex);
         }
     }
 
@@ -71,7 +142,29 @@ public abstract class BaseRepository<T> : DbContext,  IDisposable where T : clas
     {
         try
         {
+            Connection.Open();
             return await Connection.QueryAsync<T>(query, parameters);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error executing GetAllAsync: {ex.Message}", ex);
+        }
+    }
+
+    public IEnumerable<T> SelectData(string query)
+    {
+        try
+        {
+            Connection.Open();
+            if (_connection.State == ConnectionState.Open)
+            {
+                Console.WriteLine("Koneksi berhasil dibuka!");
+            }
+            else
+            {
+                Console.WriteLine($"Status koneksi: {_connection.State}");
+            }
+            return _connection.Query<T>(query);
         }
         catch (Exception ex)
         {
