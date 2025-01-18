@@ -1,5 +1,6 @@
 using MySql.Data.MySqlClient;
 using System.Data;
+using ClassLibrary.Helper;
 
 public class MySqlDatabaseConnection : IDatabaseConnection
 {
@@ -14,7 +15,8 @@ public class MySqlDatabaseConnection : IDatabaseConnection
     {
         using var connection = new MySqlConnection(_connectionString);
         connection.Open();
-        Console.WriteLine("Connected to MySQL database.");
+        
+        LoggerHelper.Info("Success Connected to Db Mysql");
     }
 
     public IEnumerable<T> ExecuteReader<T>(string storedProcedure, Func<IDataReader, T> map, Dictionary<string, object> parameters = null)
