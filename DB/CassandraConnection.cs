@@ -54,8 +54,8 @@ namespace ClassLibrary.DB
         {
             if (_session == null)
             {
-                LoggerHelper.Error("Connection Host Empty.");
-                throw new InvalidOperationException("Connection Host Empty.");
+                LoggerHelper.Error("CreateConnection Host Empty.");
+                throw new InvalidOperationException("CreateConnection Host Empty.");
             }
 
             return _session;
